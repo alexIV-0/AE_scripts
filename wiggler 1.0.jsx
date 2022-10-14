@@ -22,6 +22,10 @@
 
     v.0.6
     переделываю интерфейс
+
+    v 1.0
+    добавил проверку на то, что выбрано несколько свойств на одном слое. в этом случае все выбранные свойства будут ссылаться на одни и те же контроллеры (˜160 строка)
+    надо добавить (или переписать) что бы имена при создании не
 */
 
 function ST(thisObj){
@@ -154,10 +158,26 @@ function ST(thisObj){
             }
         }
         */
+        //метка, что слой для всех выделенных свойств - один
+        //изначально исходим из того что слой один
+        var oneLayer = true; 
+        var i = 0;
+        while (i < arrOfLayers.length-1 && arrOfLayers.length > 2){
+            if (arrOfLayers[i].index != arrOfLayers[i+1].index) {
+                oneLayer = false;
+            }
+            i++
+        }
+        
+        i = 0;
 
-        for (var i=0; i < arrOfProp.length; i++){ //цикл по количеству выбранных свойств
+        while ( i < arrOfProp.length){ //цикл по количеству выбранных свойств
             // условие, если свойство можно разделить
-            effNameSD = arrOfProp[i].name;
+            if (oneLayer == true){
+                effNameSD = arrOfProp[0].name;
+            } else {
+                effNameSD = arrOfProp[i].name;
+            }
             expressionStr = "//wiggler\ntry{\n";
             if (_seed) {
                 expressionStr = expressionStr + "seed = "  + _exprLayer + "effect(\"W_seed - " + effNameSD + "\")(1);\nseedRandom(seed, true);\n"
@@ -279,6 +299,7 @@ function ST(thisObj){
             }
             expressionStr = expressionStr + "\n} catch (e) {value}";
             arrOfProp[i].expression = expressionStr;
+            i++;
         }
     }
     //= wigler 03 End ==============================================================
@@ -702,38 +723,38 @@ function ST(thisObj){
 
 
     function buildUI( thisObj ) {
-        var anTool = ( thisObj instanceof Panel ) ? thisObj : new Window( "palette", "Wiggler MG©", undefined, { independent: true, resizeable: false} );
+        var anTool = ( thisObj instanceof Panel ) ? thisObj : new Window( "palette", "Wiggler MG©", undefined, { independent: true, resizeable: true} );
         if ( anTool != null ) {
             var res = "group { \
                 orientation:'column', \
                 alignment:['fill', 'top'], alignChildren:['fill', 'top'],\
                 panelAF:Panel {text:'Auto Fade', margins:[2, 5, 2, 2], spacing:2, \
                     groupAF:Group {alignment:['fill', 'top'], margins:[0, 5, 0, 1], spacing:'2', \
-                        ButtonM:Button {text:'M', alignment:['fill', 'center'], size:[46, 22], helpTip: 'LMB - add faleIn by marker\\rRMB - add fadeOut by marker'}, \
-                        ButtonL:Button {text:'L', alignment:['fill', 'center'], size:[46, 22], helpTip: 'LMB - add faleIn by previos/next layer\\rRMB - add fadeOut by previos/next layer'}, \
-                        ButtonIO:Button {text:'I/O', alignment:['fill', 'center'], size:[46, 22], helpTip: 'LMB - add faleIn by slider\\rRMB - add fadeOut by slider'}, \
-                        ButtonD:Button {text:'-', alignment:['fill', 'center'], size:[46, 22], helpTip: 'delite all fadeIn/fadeOut expression'}}},\
+                        ButtonM:Button {text:'M', alignment:['fill', 'center'], size:[25, 22], helpTip: 'LMB - add faleIn by marker\\rRMB - add fadeOut by marker'}, \
+                        ButtonL:Button {text:'L', alignment:['fill', 'center'], size:[25, 22], helpTip: 'LMB - add faleIn by previos/next layer\\rRMB - add fadeOut by previos/next layer'}, \
+                        ButtonIO:Button {text:'I/O', alignment:['fill', 'center'], size:[25, 22], helpTip: 'LMB - add faleIn by slider\\rRMB - add fadeOut by slider'}, \
+                        ButtonD:Button {text:'-', alignment:['fill', 'center'], size:[25, 22], helpTip: 'delite all fadeIn/fadeOut expression'}}},\
                 pPanelW:Panel {text:'Wiggler', orientation:'column', margins:[0, 8, 0, 1], spacing:2, \
                     gGrpMain:Group {alignment:['fill', 'fill'], spacing:2, \
                         gGrpW:Group {alignment:['fill', 'fill'], spacing:2,\
-                            gGrpButt:Group {alignment:['fill', 'fill'], \
-                                btButtW:Button {text:'Wiggle', helpTip:'+Shift - separate Friq \\r+Alt - separate Amp', alignment:['center', 'fill'], size:[46, 36]},\
+                            gGrpButt:Group {alignment:['fill', 'fill'], margins:[4, 0, 4, 0],\
+                                btButtW:Button {text:'Wiggle', helpTip:'+Shift - separate Friq \\r+Alt - separate Amp', alignment:['fill', 'fill'], size:[45, 36]},\
                             }, \
                             gGrpChb:Group {orientation:'column', margins:[0, 0, 0, 0], spacing:0, \
                                 gGroup2:Group {alignment:['fill', 'fill'], alignChildren:['center', 'top'], \
                                     chBoxL:Checkbox {text:'Loop', helpTip: 'loops the parameter \\rand adds a slider to control the looping time'}, \
                                     chSeed:Checkbox {text:'cSeed', helpTip: 'add slider for comtrol \\rcastom seed for wiggle'}}, \
-                                gSepar:Group {alignment:['left', 'fill'], enabled:true, \
-                                    ddSep:DropDownList {alignment:['left', 'fill'], properties:{items: ['General', 'Separate FREQ', 'Separate AMP', 'Separate FREQ & AMP']}}, \
+                                gSepar:Group {alignment:['fill', 'fill'], enabled:true, margins:[2, 0, 4, 0],\
+                                    ddSep:DropDownList {alignment:['fill', 'fill'], properties:{items: ['General', 'Separate FREQ', 'Separate AMP', 'Separate FREQ & AMP']}}, \
                                 }, \
                             }, \
                         }, \
                     }, \
                     gParam:Group {orientation:'row', margins:[4, 4, 4, 2], alignment:['fill', 'top'], spacing:2, \
-                        bPos:Button {text:'P', alignment:['fill', 'center'], helpTip: 'add wiggle on\\rPosition property',size:[46, 22]}, \
-                        bRot:Button {text:'R', alignment:['fill', 'center'], helpTip: 'add wiggle on\\rRotation property', size:[46, 22]}, \
-                        bScale:Button {text:'S', alignment:['fill', 'center'], helpTip: 'Left Butt - uniform scale\\rRight Butt - different scale', size:[46, 22]}, \
-                        delButt:Button {text:'-', alignment:['fill', 'center'], helpTip: 'delite wiggle expression\\rand effect on this layer', size:[46, 22]}, \
+                        bPos:Button {text:'P', alignment:['fill', 'center'], helpTip: 'add wiggle on\\rPosition property',size:[25, 22]}, \
+                        bRot:Button {text:'R', alignment:['fill', 'center'], helpTip: 'add wiggle on\\rRotation property', size:[25, 22]}, \
+                        bScale:Button {text:'S', alignment:['fill', 'center'], helpTip: 'Left Butt - uniform scale\\rRight Butt - different scale', size:[25, 22]}, \
+                        delButt:Button {text:'-', alignment:['fill', 'center'], helpTip: 'delite wiggle expression\\rand effect on this layer', size:[25, 22]}, \
                     }, \
                 }, \
             }";
@@ -741,6 +762,9 @@ function ST(thisObj){
             anTool.grp = anTool.add( res );  //добавляем в нашу панельку только что созданные  кнопки интерфейса
             anTool.layout.layout( true );
             anTool.grp.minimumSize = anTool.grp.size;
+            anTool.onResizing = anTool.onResize = function() {
+                anTool.layout.resize();
+            };
 
             var separateDDList = anTool.grp.pPanelW.gGrpMain.gGrpW.gGrpChb.gSepar.ddSep;
             separateDDList.selection = 0;
